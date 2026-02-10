@@ -97,6 +97,13 @@ func RemoveClientBySession(session *yamux.Session) {
 		client.Session.Close() // Ensure closed
 	} else {
 		log.Printf("[Core] Warning: Session disconnect but no client found for session ptr: %p", session)
+
+		// Attempt to find by scanning ALL clients for the same session pointer again (double check)
+		// Or maybe the map key is somehow different? No, key is string.
+
+		// Fallback: iterate all clients and if session matches, force remove?
+		// We already did that in the loop above.
+
 		// Debug: print all clients
 		for id, c := range Clients {
 			log.Printf("[Core] Existing client: %s, session ptr: %p", id, c.Session)
