@@ -215,9 +215,6 @@ func removeService(c *gin.Context) {
 		return
 	}
 
-	// Update Core State (will close listeners)
-	core.UpdateServices(clientID, newServices)
-
 	c.JSON(200, gin.H{"status": "removed, pushed to client"})
 }
 

@@ -9,7 +9,6 @@ import (
 
 type Config struct {
 	ServerAddr string `yaml:"server_addr"`
-	ClientID   string `yaml:"client_id"` // Persist Client ID
 	User       struct {
 		Name        string `yaml:"name"`
 		Phone       string `yaml:"phone"`
@@ -41,18 +40,7 @@ func Save(name, phone, projectName, remark string) {
 	GlobalConfig.User.Phone = phone
 	GlobalConfig.User.ProjectName = projectName
 	GlobalConfig.User.Remark = remark
-	// ClientID is managed separately or should be saved here too if changed?
-	// Usually ClientID is set once.
 
-	saveFile()
-}
-
-func SetClientID(id string) {
-	GlobalConfig.ClientID = id
-	saveFile()
-}
-
-func saveFile() {
 	data, err := yaml.Marshal(&GlobalConfig)
 	if err != nil {
 		log.Printf("Failed to marshal config: %v", err)

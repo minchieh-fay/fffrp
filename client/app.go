@@ -32,9 +32,6 @@ func NewApp() *App {
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 
-	// Initialize State (Load ClientID)
-	core.InitState()
-
 	// Register update callback to notify frontend
 	core.OnUpdate = func() {
 		// Emit event to frontend
@@ -113,33 +110,9 @@ func (a *App) connect(addr string) {
 		fmt.Println("Connected!")
 		runtime.EventsEmit(a.ctx, "connection-state", true)
 
-		// Sync local services to server
-		a.syncLocalServices()
-	}
-}
-
-func (a *App) syncLocalServices() {
-	core.State.Lock.RLock()
-	client := core.State.RPCClient
-	connected := core.State.IsConnected
-	myID := core.State.ClientID
-	currentServices := make([]common.TargetService, len(core.State.Services))
-	copy(currentServices, core.State.Services)
-	core.State.Lock.RUnlock()
-
-	if connected && client != nil {
-		fmt.Printf("Syncing %d services to server...\n", len(currentServices))
-		args := &common.SyncConfigArgs{
-			ClientID: myID,
-			Services: currentServices,
-		}
-		var reply common.BaseReply
-		go func() {
-			err := client.Call("ServerRPCContext.SyncConfig", args, &reply)
-			if err != nil {
-				fmt.Printf("SyncConfig failed: %v\n", err)
-			}
-		}()
+		// Trigger config sync?
+		// We should probably sync our local services to server if we have any.
+		// For now, let's assume services are in core.State.Services
 	}
 }
 
