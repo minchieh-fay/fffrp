@@ -107,6 +107,8 @@ func StopPublicListener(port int) {
 		ln.Close()
 		delete(Listeners, port)
 		log.Printf("[Core] Stopped listener on port %d", port)
+	} else {
+		log.Printf("[Core] Warning: Attempted to stop listener on port %d but not found in map", port)
 	}
 }
 
@@ -154,10 +156,15 @@ func UpdateServices(clientID string, services []common.TargetService) {
 		newServiceIDs[svc.ID] = true
 	}
 
+	log.Printf("[Core] UpdateServices Check: Client has %d old services, %d new services", len(client.Services), len(updatedServices))
+
 	for _, oldSvc := range client.Services {
 		if !newServiceIDs[oldSvc.ID] {
 			log.Printf("[Core] Service %s removed, stopping listener on port %d", oldSvc.ID, oldSvc.RemotePort)
 			StopPublicListener(oldSvc.RemotePort)
+		} else {
+			// Check if port changed (should not happen usually but good to check)
+			// ...
 		}
 	}
 
