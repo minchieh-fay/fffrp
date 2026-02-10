@@ -1,0 +1,4 @@
+server:
+  tcp_port: 7001
+  web_port: 8080
+  port_start: 10000

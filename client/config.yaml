@@ -1,0 +1,6 @@
+server_addr: 127.0.0.1:7001
+user:
+    name: 费费
+    phone: "18948474737"
+    project_name: 北京联通
+    remark: "123"
