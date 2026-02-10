@@ -2,6 +2,7 @@ package core
 
 import (
 	"bufio"
+	"client/config"
 	"common"
 	"fmt"
 	"io"
@@ -32,11 +33,22 @@ type AppState struct {
 }
 
 var State = &AppState{
-	ClientID: fmt.Sprintf("client-%d", time.Now().UnixNano()), // Simple random ID
+	// ClientID will be loaded from config or generated
 }
 
 // OnUpdate is called when state changes
 var OnUpdate func()
+
+// InitState initializes the client state
+func InitState() {
+	if config.GlobalConfig.ClientID == "" {
+		// Generate new ID and save
+		newID := fmt.Sprintf("client-%d", time.Now().UnixNano())
+		config.SetClientID(newID)
+	}
+	State.ClientID = config.GlobalConfig.ClientID
+	log.Println("[Core] Initialized with ClientID:", State.ClientID)
+}
 
 // ConnectServer establishes connection to the server
 func ConnectServer(addr string) error {

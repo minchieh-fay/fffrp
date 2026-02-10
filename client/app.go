@@ -32,6 +32,9 @@ func NewApp() *App {
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 
+	// Initialize State (Load ClientID)
+	core.InitState()
+
 	// Register update callback to notify frontend
 	core.OnUpdate = func() {
 		// Emit event to frontend
