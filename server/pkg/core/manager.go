@@ -255,8 +255,8 @@ func handleUserConnection(userConn net.Conn, publicPort int, clientID string, ta
 
 	// 2. Send Handshake (Target IP:Port)
 	// Format: "IP:Port\n"
-	targetAddr := fmt.Sprintf("%s:%d", targetIP, targetPort)
-	_, err = stream.Write([]byte(targetAddr + "\n"))
+	targetAddr := fmt.Sprintf("%s:%d\n", targetIP, targetPort)
+	_, err = stream.Write([]byte(targetAddr))
 	if err != nil {
 		log.Printf("[Core] Failed to send handshake: %v", err)
 		stream.Close()

@@ -182,11 +182,13 @@ func handleDataStream(stream net.Conn) {
 
 	// 3. Pipe
 	go func() {
+		defer localConn.Close()
+		defer stream.Close()
 		io.Copy(localConn, stream)
-		localConn.Close()
 	}()
 	go func() {
+		defer stream.Close()
+		defer localConn.Close()
 		io.Copy(stream, localConn)
-		stream.Close()
 	}()
 }
