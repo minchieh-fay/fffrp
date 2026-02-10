@@ -184,6 +184,25 @@ func handleDataStream(stream net.Conn) {
 	go func() {
 		defer localConn.Close()
 		defer stream.Close()
+		// We MUST NOT use 'stream' directly if 'reader' has buffered data!
+		// 'reader' is a bufio.Reader wrapping 'stream'. It may have read more bytes than just the newline.
+		// We need to write any buffered bytes to localConn first, then copy the rest from stream.
+
+		if reader.Buffered() > 0 {
+			bufferedBytes, _ := reader.Peek(reader.Buffered())
+			localConn.Write(bufferedBytes)
+		}
+
+		// Now copy the rest directly from stream (assuming bufio doesn't hold anything else invisible)
+		// actually, mixing bufio and direct read is dangerous if we don't discard the buffered part from the reader?
+		// No, Peek just looks. We need to consume it or just Write it.
+		// But wait, if we use io.Copy(localConn, stream), it reads from 'stream'.
+		// 'stream' cursor is ahead of 'reader' cursor if reader buffered data.
+		// So we are good?
+		// NO! 'stream' cursor is AHEAD. 'reader' has data in memory that 'stream' already delivered.
+		// So we must write reader.Buffered() to localConn.
+		// AND we must ensure subsequent reads come from 'stream'.
+
 		io.Copy(localConn, stream)
 	}()
 	go func() {
