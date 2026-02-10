@@ -86,14 +86,12 @@ func RemoveClientBySession(session *yamux.Session) {
 	if targetID != "" {
 		log.Printf("[Core] Removing client %s due to session disconnect", targetID)
 		client := Clients[targetID]
-		delete(Clients, targetID)
-		client.Session.Close() // Ensure closed
-		// Do not clean up listeners? Or should we?
-		// If client disconnects, we probably should stop listening on public ports.
-		// YES.
+		// Close all listeners
 		for _, svc := range client.Services {
 			StopPublicListener(svc.RemotePort)
 		}
+		delete(Clients, targetID)
+		client.Session.Close() // Ensure closed
 	}
 	if OnClientUpdate != nil {
 		OnClientUpdate()
