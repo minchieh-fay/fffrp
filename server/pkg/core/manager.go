@@ -62,7 +62,7 @@ func AddClient(id string, session *yamux.Session, rpcClient *rpc.Client, name, p
 		Remark:      remark,
 	}
 	Clients[id] = client
-	log.Printf("[Core] Client %s registered", id)
+	log.Printf("[Core] Client %s registered with session ptr: %p", id, session)
 
 	if OnClientUpdate != nil {
 		OnClientUpdate()
@@ -74,6 +74,8 @@ func AddClient(id string, session *yamux.Session, rpcClient *rpc.Client, name, p
 func RemoveClientBySession(session *yamux.Session) {
 	ClientsLock.Lock()
 	defer ClientsLock.Unlock()
+
+	log.Printf("[Core] RemoveClientBySession called with session ptr: %p", session)
 
 	var targetID string
 	for id, c := range Clients {
@@ -88,11 +90,19 @@ func RemoveClientBySession(session *yamux.Session) {
 		client := Clients[targetID]
 		// Close all listeners
 		for _, svc := range client.Services {
+			log.Printf("[Core] Cleanup: Stopping listener for service %s on port %d", svc.ID, svc.RemotePort)
 			StopPublicListener(svc.RemotePort)
 		}
 		delete(Clients, targetID)
 		client.Session.Close() // Ensure closed
+	} else {
+		log.Printf("[Core] Warning: Session disconnect but no client found for session ptr: %p", session)
+		// Debug: print all clients
+		for id, c := range Clients {
+			log.Printf("[Core] Existing client: %s, session ptr: %p", id, c.Session)
+		}
 	}
+
 	if OnClientUpdate != nil {
 		OnClientUpdate()
 	}
