@@ -158,6 +158,7 @@ func UpdateServices(clientID string, services []common.TargetService) {
 
 	for _, oldSvc := range client.Services {
 		if !newServiceIDs[oldSvc.ID] {
+			log.Printf("[Core] Service %s removed, stopping listener on port %d", oldSvc.ID, oldSvc.RemotePort)
 			StopPublicListener(oldSvc.RemotePort)
 		}
 	}

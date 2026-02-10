@@ -110,9 +110,33 @@ func (a *App) connect(addr string) {
 		fmt.Println("Connected!")
 		runtime.EventsEmit(a.ctx, "connection-state", true)
 
-		// Trigger config sync?
-		// We should probably sync our local services to server if we have any.
-		// For now, let's assume services are in core.State.Services
+		// Sync local services to server
+		a.syncLocalServices()
+	}
+}
+
+func (a *App) syncLocalServices() {
+	core.State.Lock.RLock()
+	client := core.State.RPCClient
+	connected := core.State.IsConnected
+	myID := core.State.ClientID
+	currentServices := make([]common.TargetService, len(core.State.Services))
+	copy(currentServices, core.State.Services)
+	core.State.Lock.RUnlock()
+
+	if connected && client != nil {
+		fmt.Printf("Syncing %d services to server...\n", len(currentServices))
+		args := &common.SyncConfigArgs{
+			ClientID: myID,
+			Services: currentServices,
+		}
+		var reply common.BaseReply
+		go func() {
+			err := client.Call("ServerRPCContext.SyncConfig", args, &reply)
+			if err != nil {
+				fmt.Printf("SyncConfig failed: %v\n", err)
+			}
+		}()
 	}
 }
 
