@@ -145,6 +145,19 @@ func UpdateServices(clientID string, services []common.TargetService) {
 		updatedServices[i] = svc
 	}
 
+	// Manage Listeners
+	// 1. Close ports no longer needed
+	newServiceIDs := make(map[string]bool)
+	for _, svc := range updatedServices {
+		newServiceIDs[svc.ID] = true
+	}
+
+	for _, oldSvc := range client.Services {
+		if !newServiceIDs[oldSvc.ID] {
+			StopPublicListener(oldSvc.RemotePort)
+		}
+	}
+
 	client.Services = updatedServices
 	ClientsLock.Unlock()
 
@@ -153,8 +166,6 @@ func UpdateServices(clientID string, services []common.TargetService) {
 		OnClientUpdate()
 	}
 
-	// Manage Listeners
-	// 1. Close ports no longer needed (TODO: optimize)
 	// 2. Open new ports
 	for _, svc := range updatedServices {
 		if svc.RemotePort != 0 {

@@ -21,7 +21,7 @@ var GlobalConfig Config
 
 func Load() {
 	// Default
-	GlobalConfig.ServerAddr = "127.0.0.1:7001"
+	GlobalConfig.ServerAddr = "120.27.217.221:7001"
 
 	data, err := os.ReadFile("config.yaml")
 	if err != nil {
