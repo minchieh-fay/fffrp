@@ -2,7 +2,6 @@ package core
 
 import (
 	"bufio"
-	"client/config"
 	"common"
 	"fmt"
 	"io"
@@ -11,7 +10,6 @@ import (
 	"net/rpc"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/hashicorp/yamux"
 )
@@ -32,12 +30,12 @@ type AppState struct {
 	Remark      string
 }
 
-	ClientID: fmt.Sprintf("client-%d", time.Now().UnixNano()), // Simple random ID
+var State = &AppState{
 	// ClientID will be loaded from config or generated
 }
 
 // OnUpdate is called when state changes
-}
+var OnUpdate func()
 
 // ConnectServer establishes connection to the server
 func ConnectServer(addr string) error {

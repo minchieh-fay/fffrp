@@ -43,6 +43,10 @@ func AddClient(id string, session *yamux.Session, rpcClient *rpc.Client, name, p
 	// If exists, remove old one first?
 	if old, exists := Clients[id]; exists {
 		log.Printf("[Core] Client %s re-connected, closing old session", id)
+		// Clean up listeners for old client!
+		for _, svc := range old.Services {
+			StopPublicListener(svc.RemotePort)
+		}
 		old.Session.Close()
 		delete(Clients, id)
 	}
