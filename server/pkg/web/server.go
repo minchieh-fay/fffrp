@@ -158,6 +158,11 @@ func addService(c *gin.Context) {
 	// Also update Core state immediately?
 	// core.UpdateServices(clientID, newServices) // This also starts listener!
 	// Yes, we should do this.
+	// IMPORTANT: UpdateServices requires the ClientID used in map (which includes @IP)
+	// 'clientID' from param might be just the prefix or the full ID depending on what UI sends.
+	// If UI sends full ID "foo@1.2.3.4", then it works.
+	// If UI sends "foo", it fails.
+	// Let's assume UI uses the ID returned by getClients, which IS the full ID.
 	core.UpdateServices(clientID, newServices)
 
 	// Call Client RPC
@@ -221,6 +226,14 @@ func removeService(c *gin.Context) {
 		c.JSON(500, gin.H{"error": "rpc call failed: " + err.Error()})
 		return
 	}
+
+	// Also update Core state immediately!
+	// This is CRITICAL for the server to release the port.
+	// Previously we relied on client sending back SyncConfig?
+	// But if we only PushConfig, client might not SyncConfig back immediately or at all.
+	// Or maybe it does?
+	// Regardless, we should update server state here too.
+	core.UpdateServices(clientID, newServices)
 
 	c.JSON(200, gin.H{"status": "removed, pushed to client"})
 }
