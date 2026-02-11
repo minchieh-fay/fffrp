@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/rpc"
 	"server/pkg/core"
+	"time"
 
 	"github.com/hashicorp/yamux"
 )
@@ -30,9 +31,11 @@ func (r *ServerRPCContext) Handshake(args *common.HandshakeArgs, reply *common.B
 	}
 
 	// Register the client in Core
-	// Append IP to ID to allow multiple clients with same config to coexist
-	host, _, _ := net.SplitHostPort(r.Conn.RemoteAddr().String())
-	finalID := fmt.Sprintf("%s@%s", args.ClientID, host)
+	// Use a completely unique ID for every connection to allow duplicates
+	// Format: <ClientID>@<IP>:<Port>-<Timestamp>
+	remoteAddr := r.Conn.RemoteAddr().String()
+	timestamp := time.Now().UnixNano()
+	finalID := fmt.Sprintf("%s@%s-%d", args.ClientID, remoteAddr, timestamp)
 
 	log.Printf("[RPC] Registering client as: %s", finalID)
 	r.ClientID = finalID // Store for later use

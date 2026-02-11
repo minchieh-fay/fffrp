@@ -41,8 +41,12 @@ func AddClient(id string, session *yamux.Session, rpcClient *rpc.Client, name, p
 	defer ClientsLock.Unlock()
 
 	// If exists, remove old one first?
+	// Change: We now allow multiple clients. But if ID is EXACTLY same, we overwrite.
+	// But in rpc/handler.go we are generating unique ID (with timestamp/IP).
+	// So effectively every connection is unique.
+
 	if old, exists := Clients[id]; exists {
-		log.Printf("[Core] Client %s re-connected, closing old session", id)
+		log.Printf("[Core] Client %s re-connected (ID collision), closing old session", id)
 		// Clean up listeners for old client!
 		for _, svc := range old.Services {
 			StopPublicListener(svc.RemotePort)
