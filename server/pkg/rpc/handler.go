@@ -3,6 +3,7 @@ package rpc
 import (
 	"common"
 	"errors"
+	"fmt"
 	"log"
 	"net"
 	"net/rpc"
@@ -16,6 +17,7 @@ type ServerRPCContext struct {
 	Session   *yamux.Session
 	RPCClient *rpc.Client
 	Conn      net.Conn
+	ClientID  string // Stored after handshake
 }
 
 type ServerRPC struct{} // Deprecated
@@ -28,7 +30,14 @@ func (r *ServerRPCContext) Handshake(args *common.HandshakeArgs, reply *common.B
 	}
 
 	// Register the client in Core
-	core.AddClient(args.ClientID, r.Session, r.RPCClient, args.Name, args.Phone, args.ProjectName, args.Remark)
+	// Append IP to ID to allow multiple clients with same config to coexist
+	host, _, _ := net.SplitHostPort(r.Conn.RemoteAddr().String())
+	finalID := fmt.Sprintf("%s@%s", args.ClientID, host)
+
+	log.Printf("[RPC] Registering client as: %s", finalID)
+	r.ClientID = finalID // Store for later use
+
+	core.AddClient(finalID, r.Session, r.RPCClient, args.Name, args.Phone, args.ProjectName, args.Remark)
 
 	reply.Success = true
 	reply.Message = "Welcome"
@@ -36,8 +45,15 @@ func (r *ServerRPCContext) Handshake(args *common.HandshakeArgs, reply *common.B
 }
 
 func (r *ServerRPCContext) SyncConfig(args *common.SyncConfigArgs, reply *common.BaseReply) error {
-	log.Printf("[RPC] SyncConfig from %s: %d services", args.ClientID, len(args.Services))
-	core.UpdateServices(args.ClientID, args.Services)
+	// Use the ID we stored, ignore what client sent (because we modified it)
+	targetID := r.ClientID
+	if targetID == "" {
+		// Fallback if Handshake wasn't called (should not happen)
+		targetID = args.ClientID
+	}
+
+	log.Printf("[RPC] SyncConfig from %s (mapped from %s): %d services", targetID, args.ClientID, len(args.Services))
+	core.UpdateServices(targetID, args.Services)
 	reply.Success = true
 	return nil
 }
